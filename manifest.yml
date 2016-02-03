@@ -1,9 +1,9 @@
 ---
 applications:
-- name: hello-scala
-  memory: 256M
+- name: openolitor-server-hello
+  memory: 512M
   instances: 1
-  host: hello-scala-${random-word}
-  domain: cfapps.io
+  host: openolitorhello
+  domain: applicationcloud.io
   path: .
   buildpack: https://github.com/heroku/heroku-buildpack-scala.git

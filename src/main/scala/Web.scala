@@ -1,29 +1,34 @@
-import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
-import com.twitter.finagle.builder.ServerBuilder
-import com.twitter.finagle.http.{Http, Response}
-import com.twitter.finagle.Service
-import com.twitter.util.Future
-import java.net.InetSocketAddress
-import util.Properties
+//#imports
+import com.twitter.finagle.{Http, Service}
+import com.twitter.finagle.http
+import com.twitter.util.{Await, Future}
+import scala.util.Properties
+import scala.collection.JavaConversions._
+//#imports
 
-object Web {
-  def main(args: Array[String]) {
-    val port = Properties.envOrElse("PORT", "8080").toInt
-    println("Starting on port:"+port)
-    ServerBuilder()
-      .codec(Http())
-      .name("hello-server")
-      .bindTo(new InetSocketAddress(port))
-      .build(new Hello)
-    println("Started.")
-  }
-}
+object Web extends App {
 
-class Hello extends Service[HttpRequest, HttpResponse] {
-  def apply(req: HttpRequest): Future[HttpResponse] = {
-    val response = Response()
-    response.setStatusCode(200)
-    response.setContentString("Hello World")
-    Future(response)
+val environmentVars = System.getenv
+  for ((k,v) <- environmentVars) println(s"key: $k, value: $v")
+ 
+  val properties = System.getProperties
+  for ((k,v) <- properties) println(s"key: $k, value: $v")
+
+
+//#service
+  val host = Option(System.getenv("process.env.VCAP_APP_HOST")).getOrElse("localhost")
+  val port = Option(System.getenv("PORT")).getOrElse("8080").toInt
+  //Properties.envOrElse("PORT", "8080").toInt
+  println("We got the following values" + host + ":" + port)
+  val service = new Service[http.Request, http.Response] {
+    def apply(req: http.Request): Future[http.Response] =
+      Future.value(
+        http.Response(req.version, http.Status.Ok) //.setContentString("Hello World")
+      )
   }
+//#service
+//#builder
+  val server = Http.serve(host + ":" + port, service)
+  Await.ready(server)
+//#builder
 }
